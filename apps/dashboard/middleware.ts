@@ -1,0 +1,32 @@
+import { NextRequest, NextResponse } from "next/server";
+
+export function middleware(request: NextRequest) {
+  const username = process.env.DASHBOARD_USERNAME;
+  const password = process.env.DASHBOARD_PASSWORD;
+  if (!username || !password) {
+    if (process.env.NODE_ENV === "production") {
+      return new NextResponse("Dashboard authentication is not configured", { status: 503 });
+    }
+    return NextResponse.next();
+  }
+
+  const supplied = request.headers.get("authorization");
+  if (supplied?.startsWith("Basic ")) {
+    const decoded = atob(supplied.slice(6));
+    const separator = decoded.indexOf(":");
+    if (
+      separator >= 0 &&
+      decoded.slice(0, separator) === username &&
+      decoded.slice(separator + 1) === password
+    ) {
+      return NextResponse.next();
+    }
+  }
+
+  return new NextResponse("Authentication required", {
+    status: 401,
+    headers: { "WWW-Authenticate": 'Basic realm="Saturn Star Marketplace Engine"' },
+  });
+}
+
+export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"] };

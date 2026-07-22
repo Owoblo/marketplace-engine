@@ -1,9 +1,12 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { cityAliasSeeds, citySeeds, generateAllCells, regionSeeds, validateGeographySeeds } from "@marketplace-engine/geography";
 import {DEFAULT_SCORING_WEIGHTS} from "@marketplace-engine/intelligence";
 
-const prisma=new PrismaClient();
+const connectionString=process.env.DATABASE_URL;
+if(!connectionString)throw new Error("DATABASE_URL is required");
+const prisma=new PrismaClient({adapter:new PrismaPg({connectionString})});
 const families=[
   {key:"explicit_move",name:"Explicit move",terms:["moving sale","moving out","relocating","leaving province"],priority:100,frequencyMinutes:360},
   {key:"urgent_sale",name:"Urgent sale",terms:["must go","everything must go","need gone today"],priority:95,frequencyMinutes:360},

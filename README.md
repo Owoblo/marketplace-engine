@@ -18,6 +18,12 @@ The current vertical slice includes exact seven-region geography (Windsor outrea
 
 Verification: `npm test`, `npm run typecheck`, `npm run lint`, and `npm run build`.
 
+## Cloudflare production dashboard
+
+The Next.js dashboard deploys to Cloudflare Workers through OpenNext. Supabase access uses a Cloudflare Hyperdrive binding; do not point a Worker directly at the Supabase transaction pooler. Configure `DATABASE_URL`, `DASHBOARD_USERNAME`, and `DASHBOARD_PASSWORD` with `wrangler secret put`, then run `npm run cf:deploy -w @marketplace-engine/dashboard`.
+
+The Facebook discovery worker is intentionally not deployed to Cloudflare. It runs on the authorized Mac because the read-only adapter depends on that machine's logged-in Chrome session. Both processes share the same Supabase database, so the hosted dashboard remains available while the Mac worker is offline.
+
 The supplied `facebook-marketplace-mcp-master.zip` remains external and read-only. Build and configure that project separately; do not place Chrome cookies or Facebook tokens in this repository.
 
 ## Packages

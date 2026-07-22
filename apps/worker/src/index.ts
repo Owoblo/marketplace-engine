@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { PgBoss, type Job } from "pg-boss";
 import pino from "pino";
-import { prisma, ingestSearchResults, createManualSourceTask, TaskStatus, TaskType } from "@marketplace-engine/database";
+import { prisma, ingestSearchResults, createManualSourceTask, TaskStatus, TaskType } from "@marketplace-engine/database/node";
 import { StdioMcpTransport, FacebookMarketplaceAdapter } from "@marketplace-engine/marketplace-source";
 import { toFacebookSearchPoints, validateGeographySeeds, type RegionKey } from "@marketplace-engine/geography";
 import { evaluateFollowUp } from "@marketplace-engine/operations";

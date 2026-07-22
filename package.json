@@ -25,17 +25,22 @@
     "worker": "tsx apps/worker/src/index.ts"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^6.19.3",
     "@prisma/client": "^6.12.0",
+    "pg": "^8.22.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
+    "@opennextjs/cloudflare": "^1.20.2",
     "@types/node": "^22.16.5",
+    "@types/pg": "^8.20.0",
     "eslint": "^9.31.0",
     "prisma": "^6.12.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "wrangler": "^4.113.0"
   }
 }
