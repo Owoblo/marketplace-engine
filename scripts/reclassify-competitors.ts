@@ -1,0 +1,6 @@
+import "dotenv/config";
+import {prisma} from "@marketplace-engine/database/node";
+import {isCompetitorAdvertisement} from "@marketplace-engine/intelligence";
+
+async function main(){const listings=await prisma.listing.findMany({select:{id:true,title:true,description:true}});const ids=listings.filter(isCompetitorAdvertisement).map(listing=>listing.id);if(!ids.length){console.log(JSON.stringify({competitors:0,cancelledTasks:0}));return}const opportunities=await prisma.opportunity.findMany({where:{listingId:{in:ids}},select:{id:true}});const opportunityIds=opportunities.map(item=>item.id);const [updated,cancelled]=await prisma.$transaction([prisma.opportunity.updateMany({where:{id:{in:opportunityIds}},data:{opportunityType:"competitor",intentCategory:"none",qualificationStatus:"DISQUALIFIED",recommendedAction:"skip",opportunityScore:0,reasoningSummary:"This is a moving or delivery service advertisement and must not receive outreach.",negativeSignals:["Competing moving-service advertisement"]}}),prisma.outreachTask.updateMany({where:{opportunityId:{in:opportunityIds},status:{in:["READY","SNOOZED"]}},data:{status:"CANCELLED",followUpEligibility:false,completedAt:new Date(),skipReason:"competitor_advertisement"}})]);console.log(JSON.stringify({competitors:updated.count,cancelledTasks:cancelled.count}));}
+main().finally(()=>prisma.$disconnect());

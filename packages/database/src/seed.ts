@@ -18,7 +18,7 @@ const families=[
   {key:"rental_property",name:"Rental property",terms:["apartment for rent","house for rent"],priority:65,frequencyMinutes:1440},
   {key:"commercial_change",name:"Commercial change",terms:["office closing","business closing","office furniture"],priority:70,frequencyMinutes:1440},
   {key:"storage_clearout",name:"Storage clear-out",terms:["storage locker"],priority:60,frequencyMinutes:1440},
-  {key:"equipment",name:"Equipment",terms:["pool table","commercial equipment"],priority:55,frequencyMinutes:720},
+  {key:"equipment",name:"Bulky equipment",terms:["pool table","commercial equipment","woodworking equipment","restaurant equipment","vending machine","tool chest","riding mower","arcade machine"],priority:60,frequencyMinutes:720},
 ];
 
 async function main(){
