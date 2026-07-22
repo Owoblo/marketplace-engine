@@ -1,0 +1,18 @@
+export interface OutreachPolicyInput { listingStatus:"active"|"pending"|"sold"|"removed"|"unknown"; score:number; minimumScore:number; outreachEnabled:boolean; sellerSuppressed:boolean; listingSuppressed:boolean; activeTaskExists:boolean; sellerLastContactAt?:Date; sellerContactCount:number; maxContactAttempts:number; now?:Date; manualOverride?:boolean }
+export function evaluateInitialOutreach(input:OutreachPolicyInput){
+  if(!input.outreachEnabled)return {allowed:false,reason:"region_outreach_disabled"} as const;if(input.listingStatus!=="active")return {allowed:false,reason:"listing_inactive"} as const;if(input.sellerSuppressed||input.listingSuppressed)return {allowed:false,reason:"suppressed"} as const;if(input.activeTaskExists)return {allowed:false,reason:"active_task_exists"} as const;if(input.score<input.minimumScore)return {allowed:false,reason:"score_below_threshold"} as const;if(input.sellerContactCount>=input.maxContactAttempts&&!input.manualOverride)return {allowed:false,reason:"maximum_attempts"} as const;
+  const elapsed=input.sellerLastContactAt?((input.now??new Date()).getTime()-input.sellerLastContactAt.getTime())/86400000:Infinity;if(elapsed<30&&!input.manualOverride)return {allowed:false,reason:"seller_cooldown"} as const;return {allowed:true,reason:"eligible"} as const;
+}
+export interface FollowUpInput { daysSinceInitial:number; listingStatus:string; replied:boolean; negativeResponse:boolean; skipped:boolean; suppressed:boolean; followUpCount:number; followUpsEnabled:boolean; delayDays?:number }
+export function evaluateFollowUp(input:FollowUpInput){if(!input.followUpsEnabled)return false;if(input.listingStatus!=="active"||input.replied||input.negativeResponse||input.skipped||input.suppressed||input.followUpCount>=1)return false;return input.daysSinceInitial>=(input.delayDays??7)}
+
+export function deduplicateListings<T extends {sourceType:string;externalListingId:string}>(listings:readonly T[]):T[]{const seen=new Set<string>();return listings.filter((listing)=>{const key=`${listing.sourceType}:${listing.externalListingId}`;if(seen.has(key))return false;seen.add(key);return true})}
+
+export function assignTerritoryByCity(regionKey:string|undefined,territories:readonly {id:string;regionKey:string;enabled:boolean}[]){return territories.find((t)=>t.enabled&&t.regionKey===regionKey)??null}
+
+const normalizeLocation=(value:string)=>` ${value.toLowerCase().normalize("NFKD").replace(/[’']/g,"").replace(/[^a-z0-9]+/g," ").trim()} `;
+export function isLocationExcluded(locationText:string|undefined,excludedTerms:readonly string[]){if(!locationText)return false;const location=normalizeLocation(locationText);return excludedTerms.some(term=>{const normalized=normalizeLocation(term).trim();return normalized.length>0&&location.includes(` ${normalized} `)})}
+
+const queryTokens=(query:string)=>new Set(query.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/).filter(Boolean));
+export function queryOverlapScore(a:string,b:string){const left=queryTokens(a),right=queryTokens(b);if(!left.size||!right.size)return 0;const intersection=[...left].filter(token=>right.has(token)).length;return intersection/new Set([...left,...right]).size}
+export function findOverlappingQueries(queries:readonly {id:string;query:string;cellId:string}[],threshold=.6){const overlaps:Array<{leftId:string;rightId:string;score:number}>=[];for(let i=0;i<queries.length;i++)for(let j=i+1;j<queries.length;j++){const left=queries[i]!,right=queries[j]!;if(left.cellId!==right.cellId)continue;const score=queryOverlapScore(left.query,right.query);if(score>=threshold)overlaps.push({leftId:left.id,rightId:right.id,score})}return overlaps}

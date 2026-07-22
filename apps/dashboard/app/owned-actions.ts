@@ -1,0 +1,6 @@
+"use server";
+import {revalidatePath} from "next/cache";
+import {prisma} from "@marketplace-engine/database";
+import {z} from "zod";
+import {requireRole} from "../lib/auth";
+export async function updateOwnedListingDraft(formData:FormData){requireRole("MANAGER");const input=z.object({id:z.string(),action:z.enum(["approve","posted","archive"]),marketplaceListingUrl:z.string().url().optional().or(z.literal("")),reviewNotes:z.string().max(2000).optional()}).parse(Object.fromEntries(formData));if(input.action==="posted"&&!input.marketplaceListingUrl)throw new Error("Marketplace URL is required after manual posting");const data=input.action==="approve"?{status:"APPROVED" as const,approvedAt:new Date(),reviewNotes:input.reviewNotes??null}:input.action==="posted"?{status:"POSTED" as const,postedAt:new Date(),marketplaceListingUrl:input.marketplaceListingUrl!,reviewNotes:input.reviewNotes??null}:{status:"ARCHIVED" as const,reviewNotes:input.reviewNotes??null};await prisma.ownedListingDraft.update({where:{id:input.id},data});await prisma.auditEvent.create({data:{eventType:"owned_listing_draft_updated",entityType:"OwnedListingDraft",entityId:input.id,payload:{action:input.action}}});revalidatePath("/owned-listings")}

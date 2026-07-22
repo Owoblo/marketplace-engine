@@ -1,0 +1,10 @@
+import {prisma,TaskStatus,TaskType} from "@marketplace-engine/database";
+import {TaskCard,type QueueTask} from "./task-card";
+export const dynamic="force-dynamic";
+
+export default async function Queue(){
+  const rows=await prisma.outreachTask.findMany({where:{OR:[{status:{in:[TaskStatus.READY,TaskStatus.SNOOZED]},OR:[{snoozedUntil:null},{snoozedUntil:{lte:new Date()}}]},{status:TaskStatus.SENT,taskType:TaskType.INITIAL_OUTREACH,result:null}]},include:{opportunity:{include:{listing:true,territory:true,contacts:true}},assignedRep:true},orderBy:[{priority:"desc"},{dueAt:"asc"}],take:200});
+  const tasks:QueueTask[]=rows.map(row=>({id:row.id,title:row.opportunity.listing.title,seller:row.opportunity.listing.sellerDisplayName??"Seller unavailable",city:row.opportunity.listing.locationText??row.opportunity.territory.primaryCity,score:row.opportunity.opportunityScore,message:row.finalMessage??row.suggestedMessage,url:row.opportunity.listing.listingUrl,conversationUrl:row.conversationUrl,explanation:Array.isArray(row.opportunity.scoreExplanation)?row.opportunity.scoreExplanation.filter((v):v is string=>typeof v==="string"):[],history:row.opportunity.contacts.map(c=>`${c.sentAt.toLocaleDateString("en-CA")}: ${c.responseStatus??"sent"}`),taskType:row.taskType,status:row.status}));
+  const ready=tasks.filter(task=>task.status!=="SENT"),awaiting=tasks.filter(task=>task.status==="SENT");
+  return <><header><div><p className="eyebrow">MANUAL OUTREACH</p><h1>Outreach workspace</h1><p>{ready.length} ready to send · {awaiting.length} awaiting reply. Every Facebook message remains manual.</p></div></header><div className="filters"><button>All assigned territories ▾</button><button>Score 70+ ▾</button><button>All types ▾</button></div><h2>Ready to send and follow up</h2>{ready.length?ready.map(task=><TaskCard task={task} key={task.id}/>):<section className="panel empty"><span>★</span><h2>The send queue is clear</h2></section>}<h2 className="sectionTitle">Awaiting reply</h2>{awaiting.length?awaiting.map(task=><TaskCard task={task} key={task.id}/>):<section className="panel empty"><p>No conversations are awaiting an outcome.</p></section>}</>;
+}

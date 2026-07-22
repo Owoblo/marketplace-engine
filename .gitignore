@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.next/
+.turbo/
+.env
+.env.*
+!.env.example
+coverage/
+packages/database/generated/
+*.log
+*.sqlite*
+.DS_Store
+.runtime/
+.tools/
+**/chrome-cookies*
+**/cookies.json
+**/*auth*.json

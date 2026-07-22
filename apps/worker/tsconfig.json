@@ -1,0 +1,1 @@
+{"extends":"../../tsconfig.base.json","compilerOptions":{"rootDir":".","outDir":"dist","tsBuildInfoFile":"dist/worker.tsbuildinfo"},"references":[{"path":"../../packages/database"},{"path":"../../packages/geography"},{"path":"../../packages/marketplace-source"},{"path":"../../packages/operations"},{"path":"../../packages/crm-client"}],"include":["src/**/*.ts"]}

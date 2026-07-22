@@ -1,0 +1,519 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  MARKETPLACE_REP
+}
+
+enum LaunchPhase {
+  ACTIVE
+  PLANNED
+  PAUSED
+}
+
+enum SourceHealth {
+  HEALTHY
+  DEGRADED
+  UNAVAILABLE
+  AUTH_REQUIRED
+  UNKNOWN
+}
+
+enum ListingStatus {
+  ACTIVE
+  PENDING
+  SOLD
+  REMOVED
+  UNKNOWN
+}
+
+enum TaskStatus {
+  READY
+  SENT
+  SKIPPED
+  SNOOZED
+  CANCELLED
+}
+
+enum TaskType {
+  INITIAL_OUTREACH
+  FOLLOW_UP
+  MANUAL_SOURCE_ACTION
+}
+
+enum QualificationStatus {
+  UNREVIEWED
+  QUALIFIED
+  DISQUALIFIED
+  CONVERTED
+}
+
+enum DraftStatus {
+  DRAFT
+  APPROVED
+  POSTED
+  ARCHIVED
+}
+
+model User {
+  id          String           @id @default(cuid())
+  email       String           @unique
+  name        String
+  role        Role             @default(MARKETPLACE_REP)
+  enabled     Boolean          @default(true)
+  territories Territory[]
+  tasks       OutreachTask[]
+  contacts    ContactAttempt[]
+  auditEvents AuditEvent[]     @relation("ActorAudit")
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Source {
+  id                 String              @id @default(cuid())
+  name               String
+  type               String              @unique
+  enabled            Boolean             @default(true)
+  configuration      Json                @default("{}")
+  healthStatus       SourceHealth        @default(UNKNOWN)
+  lastSuccessfulSync DateTime?
+  lastFailure        DateTime?
+  listings           Listing[]
+  searches           SearchDefinition[]
+  suppressions       SuppressionRecord[]
+  leads              Lead[]
+  auditEvents        AuditEvent[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+}
+
+model Region {
+  id                  String                     @id @default(cuid())
+  key                 String                     @unique
+  name                String
+  province            String
+  country             String
+  timezone            String
+  west                Float
+  east                Float
+  south               Float
+  north               Float
+  gridColumns         Int
+  gridRows            Int
+  enabled             Boolean                    @default(true)
+  launchPhase         LaunchPhase                @default(PLANNED)
+  gridDefinition      RegionGridDefinition?
+  cells               GeographicSearchCell[]
+  cities              City[]
+  launchConfiguration RegionLaunchConfiguration?
+  territories         Territory[]
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+}
+
+model RegionGridDefinition {
+  id                   String   @id @default(cuid())
+  regionId             String   @unique
+  region               Region   @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  longitudeBreakpoints Json
+  latitudeBreakpoints  Json
+  expectedCellCount    Int
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model GeographicSearchCell {
+  id                String             @id @default(cuid())
+  regionId          String
+  region            Region             @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  cellKey           String             @unique
+  columnIndex       Int
+  rowIndex          Int
+  west              Float
+  east              Float
+  south             Float
+  north             Float
+  centerLongitude   Float
+  centerLatitude    Float
+  widthKm           Float
+  heightKm          Float
+  diagonalKm        Float
+  facebookRadiusKm  Float
+  enabled           Boolean            @default(true)
+  searchDefinitions SearchDefinition[]
+  runs              SearchRun[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@unique([regionId, rowIndex, columnIndex])
+}
+
+model RegionLaunchConfiguration {
+  id                          String    @id @default(cuid())
+  regionId                    String    @unique
+  region                      Region    @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  marketplaceDiscoveryEnabled Boolean   @default(false)
+  outreachEnabled             Boolean   @default(false)
+  followUpsEnabled            Boolean   @default(false)
+  crmPushEnabled              Boolean   @default(false)
+  dailyTaskLimit              Int?
+  dailySellerContactLimit     Int?
+  minimumOpportunityScore     Int       @default(70)
+  activeFrom                  DateTime?
+  activeUntil                 DateTime?
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+}
+
+model City {
+  id               String              @id @default(cuid())
+  regionId         String
+  region           Region              @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  canonicalName    String
+  normalizedName   String
+  enabled          Boolean             @default(true)
+  municipalityType String?
+  latitude         Float?
+  longitude        Float?
+  aliases          CityAlias[]
+  coverage         RegionCityCoverage?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@unique([regionId, normalizedName])
+}
+
+model CityAlias {
+  id              String   @id @default(cuid())
+  cityId          String
+  city            City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  alias           String
+  normalizedAlias String
+  createdAt       DateTime @default(now())
+
+  @@unique([cityId, normalizedAlias])
+}
+
+model RegionCityCoverage {
+  id                 String   @id @default(cuid())
+  cityId             String   @unique
+  city               City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  primaryRegionId    String
+  secondaryRegionIds Json     @default("[]")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Territory {
+  id              String             @id @default(cuid())
+  regionId        String
+  region          Region             @relation(fields: [regionId], references: [id])
+  name            String
+  primaryCity     String
+  province        String
+  latitude        Float?
+  longitude       Float?
+  defaultRadiusKm Float?
+  enabled         Boolean            @default(true)
+  assignedRepId   String?
+  assignedRep     User?              @relation(fields: [assignedRepId], references: [id])
+  operatingHours  Json               @default("{}")
+  timezone        String
+  searches        SearchDefinition[]
+  opportunities   Opportunity[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
+model QueryFamily {
+  id               String             @id @default(cuid())
+  key              String             @unique
+  name             String
+  terms            Json
+  priority         Int
+  frequencyMinutes Int
+  enabled          Boolean            @default(true)
+  searches         SearchDefinition[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model SearchDefinition {
+  id                     String               @id @default(cuid())
+  sourceId               String
+  source                 Source               @relation(fields: [sourceId], references: [id])
+  territoryId            String
+  territory              Territory            @relation(fields: [territoryId], references: [id])
+  cellId                 String
+  cell                   GeographicSearchCell @relation(fields: [cellId], references: [id])
+  queryFamilyId          String
+  queryFamily            QueryFamily          @relation(fields: [queryFamilyId], references: [id])
+  name                   String
+  query                  String
+  category               String?
+  minimumPrice           Decimal?             @db.Decimal(12, 2)
+  maximumPrice           Decimal?             @db.Decimal(12, 2)
+  radiusKm               Float
+  searchFrequencyMinutes Int
+  enabled                Boolean              @default(true)
+  priority               Int                  @default(0)
+  lastRunAt              DateTime?
+  nextRunAt              DateTime?
+  runs                   SearchRun[]
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+
+  @@unique([sourceId, cellId, query])
+}
+
+model SearchRun {
+  id                 String               @id @default(cuid())
+  searchDefinitionId String
+  searchDefinition   SearchDefinition     @relation(fields: [searchDefinitionId], references: [id])
+  cellId             String
+  cell               GeographicSearchCell @relation(fields: [cellId], references: [id])
+  status             String
+  lockKey            String               @unique
+  startedAt          DateTime             @default(now())
+  completedAt        DateTime?
+  resultCount        Int                  @default(0)
+  newCount           Int                  @default(0)
+  duplicateCount     Int                  @default(0)
+  errorCode          String?
+  errorMessage       String?
+  createdAt          DateTime             @default(now())
+}
+
+model SellerProfile {
+  id                    String              @id @default(cuid())
+  sourceId              String
+  externalSellerId      String
+  displayName           String?
+  profileUrl            String?
+  firstObservedAt       DateTime            @default(now())
+  lastObservedAt        DateTime            @default(now())
+  knownListingCount     Int                 @default(0)
+  territoriesObserved   Json                @default("[]")
+  previousOutreachCount Int                 @default(0)
+  lastOutreachAt        DateTime?
+  suppressionStatus     Boolean             @default(false)
+  suppressionReason     String?
+  listings              Listing[]
+  contacts              ContactAttempt[]
+  suppressions          SuppressionRecord[]
+
+  @@unique([sourceId, externalSellerId])
+}
+
+model Listing {
+  id                String              @id @default(cuid())
+  sourceId          String
+  source            Source              @relation(fields: [sourceId], references: [id])
+  externalListingId String
+  listingUrl        String
+  sellerId          String?
+  seller            SellerProfile?      @relation(fields: [sellerId], references: [id])
+  sellerDisplayName String?
+  title             String
+  description       String?
+  price             Decimal?            @db.Decimal(12, 2)
+  currency          String              @default("CAD")
+  category          String?
+  condition         String?
+  locationText      String?
+  latitude          Float?
+  longitude         Float?
+  imageUrls         Json                @default("[]")
+  publishedAt       DateTime?
+  firstObservedAt   DateTime            @default(now())
+  lastObservedAt    DateTime            @default(now())
+  status            ListingStatus       @default(UNKNOWN)
+  contentHash       String
+  rawSourcePayload  Json
+  materialVersion   Int                 @default(1)
+  opportunities     Opportunity[]
+  suppressions      SuppressionRecord[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@unique([sourceId, externalListingId])
+  @@index([contentHash])
+}
+
+model Opportunity {
+  id                   String              @id @default(cuid())
+  listingId            String
+  listing              Listing             @relation(fields: [listingId], references: [id])
+  territoryId          String
+  territory            Territory           @relation(fields: [territoryId], references: [id])
+  opportunityType      String
+  intentCategory       String
+  confidence           Float
+  opportunityScore     Int
+  urgencyScore         Int
+  estimatedServiceType String
+  estimatedJobSize     String
+  reasoningSummary     String
+  positiveSignals      Json
+  negativeSignals      Json
+  scoreExplanation     Json
+  recommendedAction    String
+  qualificationStatus  QualificationStatus @default(UNREVIEWED)
+  assignedRepId        String?
+  tasks                OutreachTask[]
+  contacts             ContactAttempt[]
+  lead                 Lead?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@unique([listingId, territoryId])
+}
+
+model OutreachTask {
+  id                  String      @id @default(cuid())
+  opportunityId       String
+  opportunity         Opportunity @relation(fields: [opportunityId], references: [id])
+  taskType            TaskType
+  assignedRepId       String?
+  assignedRep         User?       @relation(fields: [assignedRepId], references: [id])
+  status              TaskStatus  @default(READY)
+  priority            Int
+  suggestedMessage    String
+  finalMessage        String?
+  dueAt               DateTime
+  completedAt         DateTime?
+  conversationUrl     String?
+  result              String?
+  skipReason          String?
+  followUpEligibility Boolean     @default(false)
+  snoozedUntil        DateTime?
+  notes               String?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  @@unique([opportunityId, taskType, status])
+}
+
+model ContactAttempt {
+  id              String         @id @default(cuid())
+  opportunityId   String
+  opportunity     Opportunity    @relation(fields: [opportunityId], references: [id])
+  sellerId        String?
+  seller          SellerProfile? @relation(fields: [sellerId], references: [id])
+  repId           String?
+  rep             User?          @relation(fields: [repId], references: [id])
+  channel         String
+  templateVersion String
+  actualMessage   String
+  sentManually    Boolean        @default(true)
+  sentAt          DateTime
+  responseStatus  String?
+  responseAt      DateTime?
+  notes           String?
+  createdAt       DateTime       @default(now())
+}
+
+model Lead {
+  id                  String      @id @default(cuid())
+  opportunityId       String      @unique
+  opportunity         Opportunity @relation(fields: [opportunityId], references: [id])
+  sourceId            String
+  source              Source      @relation(fields: [sourceId], references: [id])
+  crmExternalId       String?
+  idempotencyKey      String      @unique
+  name                String?
+  phone               String?
+  email               String?
+  serviceType         String
+  originCity          String?
+  destinationCity     String?
+  estimatedMoveDate   DateTime?
+  qualificationStatus String
+  leadStatus          String
+  valueEstimate       Decimal?    @db.Decimal(12, 2)
+  crmSyncStatus       String      @default("PENDING")
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+}
+
+model SuppressionRecord {
+  id              String         @id @default(cuid())
+  sellerId        String?
+  seller          SellerProfile? @relation(fields: [sellerId], references: [id])
+  listingId       String?
+  listing         Listing?       @relation(fields: [listingId], references: [id])
+  sourceId        String
+  source          Source         @relation(fields: [sourceId], references: [id])
+  suppressionType String
+  reason          String
+  expiresAt       DateTime?
+  permanent       Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+}
+
+model AuditEvent {
+  id         String   @id @default(cuid())
+  sourceId   String?
+  source     Source?  @relation(fields: [sourceId], references: [id])
+  actorId    String?
+  actor      User?    @relation("ActorAudit", fields: [actorId], references: [id])
+  eventType  String
+  entityType String
+  entityId   String?
+  payload    Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  @@index([eventType, createdAt])
+}
+
+model ScoringConfiguration {
+  id         String   @id @default(cuid())
+  key        String   @unique
+  name       String
+  version    Int      @default(1)
+  enabled    Boolean  @default(true)
+  weights    Json
+  thresholds Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model OwnedListingCampaign {
+  id          String              @id @default(cuid())
+  territoryId String
+  sourceId    String
+  name        String
+  serviceType String
+  enabled     Boolean             @default(true)
+  weeklyLimit Int                 @default(2)
+  drafts      OwnedListingDraft[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model OwnedListingDraft {
+  id                    String               @id @default(cuid())
+  campaignId            String
+  campaign              OwnedListingCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  title                 String
+  description           String
+  price                 Decimal?             @db.Decimal(12, 2)
+  currency              String               @default("CAD")
+  imageUrls             Json                 @default("[]")
+  status                DraftStatus          @default(DRAFT)
+  marketplaceListingUrl String?
+  reviewNotes           String?
+  approvedAt            DateTime?
+  postedAt              DateTime?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+}

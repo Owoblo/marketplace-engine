@@ -1,0 +1,1 @@
+{"extends":"../../tsconfig.base.json","compilerOptions":{"rootDir":".","outDir":"dist","tsBuildInfoFile":"dist/marketplace-source.tsbuildinfo"},"references":[{"path":"../shared"},{"path":"../geography"}],"include":["src/**/*.ts","tests/**/*.ts"]}

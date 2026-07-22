@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/geography" },
+    { "path": "packages/shared" },
+    { "path": "packages/marketplace-source" },
+    { "path": "packages/intelligence" },
+    { "path": "packages/operations" },
+    { "path": "packages/crm-client" },
+    { "path": "packages/database" },
+    { "path": "apps/worker" }
+  ]
+}

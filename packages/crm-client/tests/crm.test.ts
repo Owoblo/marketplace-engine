@@ -1,0 +1,2 @@
+import {describe,expect,it} from "vitest";import {crmLeadIdempotencyKey,StubCrmClient} from "../src/index.js";
+describe("CRM idempotency",()=>{it("returns one external lead for retries",async()=>{const payload={source:"facebook_marketplace",sourceListingId:"1",sourceListingUrl:"https://example.com/1",territoryId:"windsor",serviceType:"moving",opportunityScore:90,outreachHistory:[]};const key=crmLeadIdempotencyKey(payload);const client=new StubCrmClient();expect((await client.createLead(payload,key)).externalId).toBe((await client.createLead(payload,key)).externalId)})});
