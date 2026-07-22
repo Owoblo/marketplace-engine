@@ -1,0 +1,2 @@
+.filters{align-items:center;flex-wrap:wrap}
+.filters select{border:1px solid var(--line);background:#fff;border-radius:7px;padding:9px 32px 9px 12px;color:var(--ink);font-weight:650;text-transform:capitalize}

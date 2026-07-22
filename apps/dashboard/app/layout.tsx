@@ -1,6 +1,7 @@
 import "./styles.css";
 import "./forms.css";
 import "./workflow.css";
+import "./filters.css";
 import Link from "next/link";
 export const metadata={title:"Saturn Star Marketplace Intelligence",description:"Human-operated Marketplace outreach intelligence"};
 const links=[["/","Overview"],["/outreach","Outreach Queue"],["/owned-listings","Listings We Post"],["/listings","Listings"],["/opportunities","Opportunities"],["/competitors","Competitors"],["/sellers","Sellers"],["/territories","Territories"],["/searches","Searches"],["/analytics","Analytics"],["/health","System Health"]];
