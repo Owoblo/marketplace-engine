@@ -335,6 +335,7 @@ model Listing {
   latitude          Float?
   longitude         Float?
   imageUrls         Json                @default("[]")
+  publicContactPhone String?
   publishedAt       DateTime?
   firstObservedAt   DateTime            @default(now())
   lastObservedAt    DateTime            @default(now())
@@ -434,6 +435,9 @@ model Lead {
   idempotencyKey      String      @unique
   name                String?
   phone               String?
+  contactSource       String?
+  contactPermissionStatus String        @default("UNVERIFIED")
+  contactPermissionNotes  String?
   email               String?
   serviceType         String
   originCity          String?

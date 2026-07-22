@@ -15,7 +15,7 @@ export type Classification=z.infer<typeof classificationSchema>;
 
 export const normalizedListingSchema=z.object({
   sourceType:z.string(), externalListingId:z.string().min(1), listingUrl:z.string().url(), sellerExternalId:z.string().optional(), sellerDisplayName:z.string().optional(),
-  title:z.string(), description:z.string().optional(), price:z.number().nonnegative().optional(), currency:z.string().length(3).default("CAD"), category:z.string().optional(), condition:z.string().optional(), locationText:z.string().optional(), latitude:z.number().min(-90).max(90).optional(), longitude:z.number().min(-180).max(180).optional(), imageUrls:z.array(z.string().url()).default([]), publishedAt:z.coerce.date().optional(), status:z.enum(["active","pending","sold","removed","unknown"]), rawSourcePayload:z.unknown(),
+  title:z.string(), description:z.string().optional(), price:z.number().nonnegative().optional(), currency:z.string().length(3).default("CAD"), category:z.string().optional(), condition:z.string().optional(), locationText:z.string().optional(), latitude:z.number().min(-90).max(90).optional(), longitude:z.number().min(-180).max(180).optional(), imageUrls:z.array(z.string().url()).default([]), publicContactPhone:z.string().min(7).optional(), publishedAt:z.coerce.date().optional(), status:z.enum(["active","pending","sold","removed","unknown"]), rawSourcePayload:z.unknown(),
 });
 export type NormalizedListing=z.infer<typeof normalizedListingSchema>;
 

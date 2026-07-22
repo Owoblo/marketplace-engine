@@ -1,10 +1,10 @@
 # Saturn Star Marketplace Intelligence Engine
 
-Independent lead-intelligence service for discovering Marketplace demand, classifying and scoring it, and preparing a human-operated outreach queue. Version 0.1 never sends Facebook messages automatically.
+Independent lead-intelligence service for discovering Facebook Marketplace and Kijiji demand, classifying and scoring it, and preparing a human-operated outreach queue. Version 0.1 never sends messages automatically.
 
 ## Windsor milestone
 
-The current vertical slice includes exact seven-region geography (Windsor outreach enabled first), 171 canonical cities, 55 deterministic cells, a Facebook source-adapter boundary, normalization and deduplication primitives, validated classification, deterministic scoring, outreach/cooldown/follow-up policy, CRM idempotency, Prisma schema/seeds, and a Next.js operations dashboard.
+The current vertical slice includes exact seven-region geography, 171 canonical cities, 55 deterministic cells, Facebook and Kijiji source adapters, normalization and deduplication, validated classification, deterministic scoring, outreach/cooldown/follow-up policy, CRM idempotency, Prisma schema/seeds, and a Next.js operations dashboard. Kijiji uses a seven-day first-run bootstrap followed by newest-first incremental windows.
 
 ## Local setup
 
@@ -35,7 +35,7 @@ The supplied `facebook-marketplace-mcp-master.zip` remains external and read-onl
 - `apps/dashboard`: internal overview, queue, and geographic administration UI.
 - `apps/worker`: backend-only job process boundary.
 - `packages/geography`: canonical bounds, breakpoints, cities, aliases, Haversine geometry, and Facebook conversion.
-- `packages/marketplace-source`: generic source contract and Facebook MCP adapter.
+- `packages/marketplace-source`: generic source contract, Facebook MCP adapter, and Apify-backed Kijiji adapter.
 - `packages/intelligence`: validated classification, scoring, and transparent message drafting.
 - `packages/operations`: deduplication, cooldown, suppression, launch, and follow-up policy.
 - `packages/crm-client`: idempotent stub/webhook CRM clients.

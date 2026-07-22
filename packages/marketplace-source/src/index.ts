@@ -41,3 +41,4 @@ export class FacebookMarketplaceAdapter implements MarketplaceSource {
   async getListing(input:{externalListingId:string}){return normalizeFacebookListing(await this.transport.callTool("get_listing",{listing_id:input.externalListingId}) as FacebookMcpListing)}
   async healthCheck():Promise<SourceHealth>{try{await this.transport.callTool("search_location",{query:"Windsor, Ontario"});return {status:"healthy",checkedAt:new Date()}}catch(error){const message=error instanceof Error?error.message:String(error);return {status:/cookie|session|login|401|403/i.test(message)?"auth_required":/graphql|doc.?id/i.test(message)?"degraded":"unavailable",message,checkedAt:new Date()}}}
 }
+export * from "./kijiji.js";

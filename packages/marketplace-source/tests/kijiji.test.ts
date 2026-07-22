@@ -1,0 +1,13 @@
+import {afterEach,describe,expect,it,vi} from "vitest";
+import {ApifyKijijiAdapter,buildKijijiSearchUrl,extractKijijiListingId,extractPublicPhone,normalizeKijijiListing} from "../src/index.js";
+
+const actorListing={url:"https://www.kijiji.ca/v-moving-storage/windsor-area-on/moving-sale/1712345678",title:"Moving sale - sectional must go",description:"Relocating this week. Text 519-555-0188.",price:"$450",currency:"CAD",condition:"Used - Good",images:["https://example.com/sectional.jpg"],address:{latitude:42.31,longitude:-83.03,name:"Windsor, ON"},seller:{id:"seller-42",name:"Sarah",phoneNumber:"519-555-0188"},dateFrom:"2026-07-21T14:00:00.000Z"};
+
+describe("Kijiji normalization",()=>{
+  it("uses the stable ad id and preserves detailed seller data",()=>{const listing=normalizeKijijiListing(actorListing);expect(listing).toMatchObject({sourceType:"kijiji",externalListingId:"1712345678",sellerExternalId:"seller-42",sellerDisplayName:"Sarah",price:450,publicContactPhone:"519-555-0188",latitude:42.31,longitude:-83.03});expect(listing.imageUrls).toHaveLength(1)});
+  it("extracts an unmasked description phone but not a masked seller number",()=>{expect(extractPublicPhone({...actorListing,seller:{phoneNumber:"xxx-xxx-0188"}})).toBe("519-555-0188")});
+  it("rejects URLs without a stable ad id",()=>expect(()=>extractKijijiListingId("https://www.kijiji.ca/b-canada/couch/k0l0")).toThrow());
+  it("builds a newest-first regional search URL",()=>{const url=new URL(buildKijijiSearchUrl({query:"moving sale",point:{latitude:42.175,longitude:-82.825,radiusKm:44,sourceCellKey:"windsor-region",partIndex:0}}));expect(url.searchParams.get("sort")).toBe("dateDesc");expect(url.searchParams.get("ll")).toBe("42.175,-82.825");expect(url.searchParams.get("radius")).toBe("44")});
+});
+
+describe("Apify Kijiji adapter",()=>{afterEach(()=>vi.unstubAllGlobals());it("caps result count and normalizes the dataset",async()=>{const fetchMock=vi.fn().mockResolvedValue(new Response(JSON.stringify([actorListing]),{status:200,headers:{"content-type":"application/json"}}));vi.stubGlobal("fetch",fetchMock);const adapter=new ApifyKijijiAdapter("test-token","ivanvs~kijiji-scraper",15,.25);const listings=await adapter.searchListings({query:"moving sale",point:{latitude:42.175,longitude:-82.825,radiusKm:44,sourceCellKey:"windsor-region",partIndex:0},limit:40});expect(listings).toHaveLength(1);const body=JSON.parse(fetchMock.mock.calls[0]![1].body);expect(body.maxRecords).toBe(15);expect(fetchMock.mock.calls[0]![0]).toContain("maxTotalChargeUsd=0.25")})});

@@ -2,7 +2,7 @@
 
 ## Daily rep workflow
 
-Open Outreach Queue, review the listing, score explanation, seller history, and suggested message. Edit if needed, copy it, open the original Facebook listing, and send manually. Return to mark sent, skipped, or snoozed and add notes. Record replies using the defined result taxonomy. Suppress immediately after a negative response, complaint, block, or do-not-contact request. Create a lead only when genuine contact details or estimate intent exist.
+Open Outreach Queue, review the listing, source, score explanation, seller history, and suggested message. Edit if needed, copy it, open the original Facebook or Kijiji listing, and send manually. Return to mark sent, skipped, or snoozed and add notes. Record replies using the defined result taxonomy. Suppress immediately after a negative response, complaint, block, or do-not-contact request. Create a lead only when genuine contact details or estimate intent exist. A phone published on Kijiji is prefilled but remains marked unverified until a rep records the applicable consent/contact basis and checks suppression requirements.
 
 The system never creates a second active listing task, contacts a seller inside 30 days without an admin override, exceeds configured attempts, follows up after a reply/negative response/suppression, or follows up when a listing is inactive. The maximum is one follow-up after seven days.
 
@@ -27,4 +27,4 @@ The stub returns a stable external ID for repeated pushes. The webhook client se
 
 ## Known limitations and roadmap
 
-The reference Facebook API is unofficial, fragile, macOS/Chrome-dependent, and may violate platform terms. Inbox synchronization, autonomous or browser-assisted sending, account rotation, CAPTCHA bypass, stealth behavior, Kijiji/Craigslist, notifications, experiments, revenue attribution, and map visualization are not part of this milestone. Add future sources through `MarketplaceSource`; stabilize the Windsor worker and production CRM contract before expanding.
+The reference Facebook API is unofficial, fragile, macOS/Chrome-dependent, and may violate platform terms. Inbox synchronization, autonomous or browser-assisted sending, account rotation, CAPTCHA bypass, stealth behavior, Craigslist, experiments, revenue attribution, and map visualization are not part of this milestone. Kijiji discovery is supported through a metered Apify adapter; monitor usage and actor changes from System Health.

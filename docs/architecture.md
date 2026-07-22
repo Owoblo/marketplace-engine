@@ -1,6 +1,8 @@
 # Architecture and schema
 
-The attack lane follows `source adapter → normalized listing → image/text classification → deterministic score → territory/launch gate → human task → contact result → idempotent CRM lead`. Facebook authentication is confined to the external MCP process and the worker is the only consumer. The dashboard never receives cookies or raw source credentials. The defensive lane follows `owned campaign → listing draft → manager approval → manual Facebook post → recorded URL`; it never publishes automatically.
+The attack lane follows `source adapter → normalized listing → image/text classification → deterministic score → territory/launch gate → human task → contact result → idempotent CRM lead`. Facebook authentication is confined to the external MCP process; the Apify token is confined to the worker; neither reaches the dashboard. The defensive lane follows `owned campaign → listing draft → manager approval → manual post → recorded URL`; it never publishes automatically.
+
+Kijiji searches are regional rather than city-by-keyword or canonical-cell-by-keyword. Each region/query family generates one newest-first search. The first run may ingest seven days; later runs use the previous successful run minus a safety overlap. The adapter returns full descriptions, images, coordinates, stable seller IDs, and public contact data where Kijiji exposes it. Public contact data is never treated as consent and never triggers autonomous calling or messaging.
 
 PostgreSQL is the system of record. Prisma models cover discovery, outreach, configurable scoring, geography, audit, CRM, and owned-listing campaigns, including `Source`, `Region`, `GeographicSearchCell`, `SearchDefinition`, `SearchRun`, `SellerProfile`, `Listing`, `Opportunity`, `OutreachTask`, `ContactAttempt`, `Lead`, `SuppressionRecord`, `ScoringConfiguration`, `OwnedListingCampaign`, `OwnedListingDraft`, `AuditEvent`, and role-bearing `User`.
 
