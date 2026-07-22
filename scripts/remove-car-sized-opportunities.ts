@@ -1,0 +1,6 @@
+import "dotenv/config";
+import {prisma} from "@marketplace-engine/database/node";
+import {isClearlyCarSizedItem} from "@marketplace-engine/intelligence";
+
+async function main(){const listings=await prisma.listing.findMany({select:{id:true,title:true,description:true}});const ids=listings.filter(isClearlyCarSizedItem).map(item=>item.id);if(!ids.length){console.log(JSON.stringify({listings:0,cancelledTasks:0}));return}const [updated,cancelled]=await prisma.$transaction([prisma.opportunity.updateMany({where:{listingId:{in:ids},qualificationStatus:{not:"CONVERTED"}},data:{opportunityType:"irrelevant",intentCategory:"none",qualificationStatus:"DISQUALIFIED",recommendedAction:"skip",opportunityScore:0,reasoningSummary:"This consumer item can normally fit in a car and does not independently require moving-truck or crew service.",negativeSignals:["Car-sized consumer item"]}}),prisma.outreachTask.updateMany({where:{opportunity:{listingId:{in:ids}},status:{in:["READY","SNOOZED"]}},data:{status:"CANCELLED",followUpEligibility:false,completedAt:new Date(),skipReason:"car_sized_item"}})]);console.log(JSON.stringify({listings:updated.count,cancelledTasks:cancelled.count}));}
+main().finally(()=>prisma.$disconnect());

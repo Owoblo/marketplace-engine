@@ -23,6 +23,7 @@
     "queue:cleanup": "tsx scripts/cleanup-outreach-queue.ts",
     "messages:refresh": "tsx scripts/refresh-ready-messages.ts",
     "competitors:reclassify": "tsx scripts/reclassify-competitors.ts",
+    "opportunities:remove-car-sized": "tsx scripts/remove-car-sized-opportunities.ts",
     "email:send-now": "tsx scripts/send-opportunity-alerts.ts",
     "setup:facebook": "./scripts/setup-facebook-mcp.sh",
     "worker": "tsx apps/worker/src/index.ts",
