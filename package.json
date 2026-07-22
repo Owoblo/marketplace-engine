@@ -22,6 +22,7 @@
     "db:seed": "tsx packages/database/src/seed.ts",
     "queue:cleanup": "tsx scripts/cleanup-outreach-queue.ts",
     "messages:refresh": "tsx scripts/refresh-ready-messages.ts",
+    "sellers:backfill": "node --env-file=.env --import tsx scripts/backfill-seller-profiles.ts",
     "competitors:reclassify": "tsx scripts/reclassify-competitors.ts",
     "opportunities:remove-car-sized": "tsx scripts/remove-car-sized-opportunities.ts",
     "email:send-now": "tsx scripts/send-opportunity-alerts.ts",
