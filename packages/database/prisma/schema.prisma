@@ -169,6 +169,7 @@ model RegionLaunchConfiguration {
   dailyTaskLimit              Int?
   dailySellerContactLimit     Int?
   minimumOpportunityScore     Int       @default(70)
+  outreachBrandName           String    @default("Saturn Star Movers")
   activeFrom                  DateTime?
   activeUntil                 DateTime?
   createdAt                   DateTime  @default(now())
