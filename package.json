@@ -22,7 +22,9 @@
     "db:seed": "tsx packages/database/src/seed.ts",
     "queue:cleanup": "tsx scripts/cleanup-outreach-queue.ts",
     "setup:facebook": "./scripts/setup-facebook-mcp.sh",
-    "worker": "tsx apps/worker/src/index.ts"
+    "worker": "tsx apps/worker/src/index.ts",
+    "worker:status": "./scripts/worker-service-status.sh",
+    "worker:restart": "./scripts/restart-worker-service.sh"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^6.19.3",

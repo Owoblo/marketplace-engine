@@ -24,6 +24,8 @@ The Next.js dashboard deploys to Cloudflare Workers through OpenNext. Supabase a
 
 The Facebook discovery worker is intentionally not deployed to Cloudflare. It runs on the authorized Mac because the read-only adapter depends on that machine's logged-in Chrome session. Both processes share the same Supabase database, so the hosted dashboard remains available while the Mac worker is offline.
 
+On the authorized Mac, the worker is installed as the per-user LaunchAgent `com.saturnstar.marketplace-engine`. It starts at login and restarts after a crash. A private runtime copy lives at `~/Library/SaturnStarMarketplace` because macOS blocks background services from reading Downloads. Closing the MacBook lid pauses macOS and therefore pauses discovery; opening and unlocking the Mac resumes it. Use `npm run worker:status` to see its PID and recent activity, or `npm run worker:restart` to restart it. Logs are stored in the runtime copy's `.runtime/logs/` directory.
+
 The supplied `facebook-marketplace-mcp-master.zip` remains external and read-only. Build and configure that project separately; do not place Chrome cookies or Facebook tokens in this repository.
 
 ## Packages
