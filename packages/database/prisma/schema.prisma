@@ -89,6 +89,7 @@ model Source {
   lastSuccessfulSync DateTime?
   lastFailure        DateTime?
   listings           Listing[]
+  sellers            SellerProfile[]
   searches           SearchDefinition[]
   suppressions       SuppressionRecord[]
   leads              Lead[]
@@ -298,6 +299,7 @@ model SearchRun {
 model SellerProfile {
   id                    String              @id @default(cuid())
   sourceId              String
+  source                Source              @relation(fields: [sourceId], references: [id])
   externalSellerId      String
   displayName           String?
   profileUrl            String?

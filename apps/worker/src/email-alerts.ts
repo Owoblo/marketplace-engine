@@ -19,10 +19,10 @@ async function sendEmail(input:{subject:string;html:string}){
 
 export async function sendOpportunityDigest(db:PrismaClient){
   const mail=config();if(!mail)return {sent:false,count:0};
-  const candidates=await db.outreachTask.findMany({where:{status:"READY",priority:{gte:mail.minimumScore},NOT:{opportunity:{listing:{listingUrl:{startsWith:"manual:"}}}}},include:{opportunity:{include:{listing:true,territory:{include:{region:true}}}}},orderBy:[{priority:"desc"},{createdAt:"asc"}],take:25});
+  const candidates=await db.outreachTask.findMany({where:{status:"READY",priority:{gte:mail.minimumScore},NOT:{opportunity:{listing:{listingUrl:{startsWith:"manual:"}}}}},include:{opportunity:{include:{listing:{include:{source:true}},territory:{include:{region:true}}}}},orderBy:[{priority:"desc"},{createdAt:"asc"}],take:25});
   const unalerted=[];for(const task of candidates){if(!await db.auditEvent.findFirst({where:{eventType:"email_opportunity_alert",entityType:"OutreachTask",entityId:task.id}}))unalerted.push(task)}
   if(!unalerted.length)return {sent:false,count:0};
-  const rows=unalerted.map(task=>`<li><strong>${task.priority} — ${escapeHtml(task.opportunity.listing.title)}</strong><br>${escapeHtml(task.opportunity.listing.locationText??task.opportunity.territory.primaryCity)} · ${escapeHtml(task.opportunity.opportunityType.replaceAll("_"," "))}<br><a href="${escapeHtml(task.opportunity.listing.listingUrl)}">Open Facebook listing</a></li>`).join("");
+  const rows=unalerted.map(task=>`<li><strong>${task.priority} — ${escapeHtml(task.opportunity.listing.title)}</strong><br>${escapeHtml(task.opportunity.listing.locationText??task.opportunity.territory.primaryCity)} · ${escapeHtml(task.opportunity.opportunityType.replaceAll("_"," "))}<br><a href="${escapeHtml(task.opportunity.listing.listingUrl)}">Open ${escapeHtml(task.opportunity.listing.source.name)} listing</a></li>`).join("");
   await sendEmail({subject:`${unalerted.length} high-priority Marketplace opportunit${unalerted.length===1?"y":"ies"}`,html:`<h2>Saturn Star Marketplace opportunities</h2><p>${unalerted.length} new task${unalerted.length===1?" is":"s are"} ready for human review. No messages were sent automatically.</p><ol>${rows}</ol><p><a href="${mail.dashboardUrl}/outreach?minScore=${mail.minimumScore}">Open outreach queue</a></p>`});
   await db.auditEvent.createMany({data:unalerted.map(task=>({eventType:"email_opportunity_alert",entityType:"OutreachTask",entityId:task.id,payload:{to:mail.to,score:task.priority}}))});
   return {sent:true,count:unalerted.length};
