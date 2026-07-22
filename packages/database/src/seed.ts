@@ -24,6 +24,7 @@ const families=[
 async function main(){
   validateGeographySeeds();
   const rep=await prisma.user.upsert({where:{email:process.env.SEED_REP_EMAIL??"marketplace@saturnstarmovers.ca"},update:{},create:{email:process.env.SEED_REP_EMAIL??"marketplace@saturnstarmovers.ca",name:"Marketplace Rep",role:"MARKETPLACE_REP"}});
+  await prisma.user.upsert({where:{email:"hunter@starmovers.ca"},update:{name:"Hunter Moorew",role:"MARKETPLACE_REP",enabled:true},create:{email:"hunter@starmovers.ca",name:"Hunter Moorew",role:"MARKETPLACE_REP"}});
   await prisma.user.upsert({where:{email:process.env.SEED_ADMIN_EMAIL??"admin@saturnstarmovers.ca"},update:{},create:{email:process.env.SEED_ADMIN_EMAIL??"admin@saturnstarmovers.ca",name:"Marketplace Admin",role:"ADMIN"}});
   await prisma.scoringConfiguration.upsert({where:{key:"default-v1"},update:{weights:DEFAULT_SCORING_WEIGHTS},create:{key:"default-v1",name:"Default opportunity scoring",weights:DEFAULT_SCORING_WEIGHTS,thresholds:{immediate:85,standard:70,review:50,low:30,skip:0}}});
   const sourceConfiguration={rateLimitPerMinute:3,maxListingAgeDays:7,includeListingsWithUnknownAge:true,excludedLocationTerms:["Detroit","Michigan","Dearborn","Livonia","Southfield","Port Huron","United States","USA"]};

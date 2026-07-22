@@ -20,5 +20,6 @@
       "binding": "HYPERDRIVE",
       "id": "61af5cc78050460591ea5f4c69d7d508"
     }
-  ]
+  ],
+  "r2_buckets": [{"binding":"OUTREACH_PROOFS","bucket_name":"saturn-star-outreach-proofs"}]
 }

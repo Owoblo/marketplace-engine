@@ -73,8 +73,10 @@ model User {
   enabled     Boolean          @default(true)
   territories Territory[]
   tasks       OutreachTask[]
+  claimedTasks OutreachTask[] @relation("ClaimedOutreach")
   contacts    ContactAttempt[]
   auditEvents AuditEvent[]     @relation("ActorAudit")
+  outreachProofs OutreachProof[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 }
@@ -390,6 +392,10 @@ model OutreachTask {
   taskType            TaskType
   assignedRepId       String?
   assignedRep         User?       @relation(fields: [assignedRepId], references: [id])
+  claimedById         String?
+  claimedBy           User?       @relation("ClaimedOutreach", fields: [claimedById], references: [id])
+  claimedAt           DateTime?
+  claimExpiresAt      DateTime?
   status              TaskStatus  @default(READY)
   priority            Int
   suggestedMessage    String
@@ -402,10 +408,26 @@ model OutreachTask {
   followUpEligibility Boolean     @default(false)
   snoozedUntil        DateTime?
   notes               String?
+  proofs              OutreachProof[]
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
 
   @@unique([opportunityId, taskType, status])
+  @@index([status, claimedById, claimExpiresAt])
+}
+
+model OutreachProof {
+  id           String       @id @default(cuid())
+  taskId       String
+  task         OutreachTask @relation(fields: [taskId], references: [id])
+  uploadedById String
+  uploadedBy   User         @relation(fields: [uploadedById], references: [id])
+  storageKey   String       @unique
+  mimeType     String
+  sizeBytes    Int
+  createdAt    DateTime     @default(now())
+
+  @@index([taskId, createdAt])
 }
 
 model ContactAttempt {
