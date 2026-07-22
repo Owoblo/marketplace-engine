@@ -32,7 +32,19 @@ export class OpenAiListingClassifier {constructor(private readonly apiKey:string
 export function createListingClassifier(options:{apiKey?:string;model?:string}){if(!options.apiKey)return classifyDeterministically;const ai=new OpenAiListingClassifier(options.apiKey,options.model);return async(listing:NormalizedListing)=>{if(isCompetitorAdvertisement(listing))return classifyDeterministically(listing);try{return await ai.classify(listing)}catch{return classifyDeterministically(listing)}}}
 
 export function draftMessage(listing:NormalizedListing,classification:Classification,phone:string):string {
-  const name=listing.sellerDisplayName?` ${listing.sellerDisplayName.split(" ")[0]}`:"";const subject=listing.title.trim()||"listing";const digits=phone.replace(/\D/g,"");const displayPhone=digits.length===10?`(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`:phone;
-  const body=classification.opportunityType==="residential_move"?`I saw your ${subject} listing. If you need help with larger items or the final move, Saturn Star works across the area.`:classification.opportunityType==="rental_move"?`I saw the ${subject} listing. Saturn Star helps tenants and landlords with local moves, furniture delivery, and move-out support.`:`I saw the ${subject} you listed. If it sells and the buyer needs pickup or delivery help, Saturn Star can handle it locally.`;
-  return `Hi${name}, ${body} For a quick no-obligation quote, call or text us at ${displayPhone} with the pickup and drop-off details.`.slice(0,400);
+  const name=listing.sellerDisplayName?` ${listing.sellerDisplayName.trim().split(/\s+/)[0]}`:"";const digits=phone.replace(/\D/g,"");const displayPhone=digits.length===10?`(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`:phone;const text=`${listing.title} ${listing.description??""}`.toLowerCase();
+  const item=/\b(sectional|couch|sofa|dining (?:table|set)|bedroom set|bed frame|mattress|dresser|wardrobe|desk|patio set|pool table|washer(?: and)? dryer|washer|dryer|refrigerator|fridge|freezer|stove|appliance|cabinet|bookshelf)\b/i.exec(text)?.[0]??"item";
+  let body:string;
+  switch(classification.opportunityType){
+    case "residential_move":body="It looks like you're preparing for a move. If you need a hand with the larger items or the final move, our Saturn Star moving team would be happy to help.";break;
+    case "rental_move":body=`It looks like you're renting out a place${listing.locationText?` in ${listing.locationText.split(",")[0]}`:""}. If your new tenant needs help moving in, our Saturn Star team can help with the move or furniture delivery.`;break;
+    case "office_move":body="It looks like you're clearing out some business items. If any buyers need pickup or delivery—or you need help with the final clear-out—our Saturn Star moving team can help.";break;
+    case "appliance_delivery":body=`That ${item.toLowerCase()} may need a truck once it sells. If your buyer needs pickup and delivery, our Saturn Star team can take care of it locally.`;break;
+    case "furniture_delivery":case "equipment_purchase":body=`That ${item.toLowerCase()} looks like something a buyer may need help moving. If delivery comes up, our Saturn Star team can pick it up and deliver it locally.`;break;
+    case "packing":body="If packing becomes one more thing on your list, our Saturn Star moving team can help make it easier.";break;
+    case "junk_removal":body="If you need help clearing out the remaining items, our Saturn Star team can handle the heavy lifting and removal.";break;
+    case "labour_only":body="If you need an extra set of hands for the heavy items, our Saturn Star moving team can help with the loading and lifting.";break;
+    default:body="If moving, pickup, or delivery help comes up, our Saturn Star moving team would be happy to help.";
+  }
+  return `Hi${name}, ${body} Feel free to message me here, or call or text ${displayPhone}, and we can give you a quick quote.`.slice(0,400);
 }

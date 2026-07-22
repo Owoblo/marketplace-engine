@@ -21,6 +21,8 @@
     "db:deploy": "prisma migrate deploy --schema packages/database/prisma/schema.prisma",
     "db:seed": "tsx packages/database/src/seed.ts",
     "queue:cleanup": "tsx scripts/cleanup-outreach-queue.ts",
+    "messages:refresh": "tsx scripts/refresh-ready-messages.ts",
+    "email:send-now": "tsx scripts/send-opportunity-alerts.ts",
     "setup:facebook": "./scripts/setup-facebook-mcp.sh",
     "worker": "tsx apps/worker/src/index.ts",
     "worker:status": "./scripts/worker-service-status.sh",

@@ -26,6 +26,8 @@ The Facebook discovery worker is intentionally not deployed to Cloudflare. It ru
 
 On the authorized Mac, the worker is installed as the per-user LaunchAgent `com.saturnstar.marketplace-engine`. It starts at login and restarts after a crash. A private runtime copy lives at `~/Library/SaturnStarMarketplace` because macOS blocks background services from reading Downloads. Closing the MacBook lid pauses macOS and therefore pauses discovery; opening and unlocking the Mac resumes it. Use `npm run worker:status` to see its PID and recent activity, or `npm run worker:restart` to restart it. Logs are stored in the runtime copy's `.runtime/logs/` directory.
 
+When `RESEND_API_KEY` and `ALERT_EMAIL_TO` are configured, the worker sends an hourly batched digest of previously unalerted ready tasks at or above `ALERT_MIN_SCORE`, a daily summary at 8:05 a.m. Toronto time, and deduplicated source-health alerts. Email is informational only and never sends a Facebook message.
+
 The supplied `facebook-marketplace-mcp-master.zip` remains external and read-only. Build and configure that project separately; do not place Chrome cookies or Facebook tokens in this repository.
 
 ## Packages
