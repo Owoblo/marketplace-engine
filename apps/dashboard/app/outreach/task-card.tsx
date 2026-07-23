@@ -2,17 +2,18 @@
 import {useState} from "react";
 import {claimTask,createLead,recordReply,saveConversationUrl,suppressSeller,updateTask} from "../actions";
 
-export interface QueueTask {id:string;title:string;seller:string;city:string;score:number;message:string;url:string;conversationUrl:string|null;sourceType:string;sourceName:string;publicPhone:string|null;explanation:string[];history:string[];taskType:string;status:string;proofId?:string|null;claimedByMe?:boolean}
+export interface QueueTask {id:string;arrivedAt:string;title:string;seller:string;city:string;score:number;message:string;url:string;conversationUrl:string|null;sourceType:string;sourceName:string;publicPhone:string|null;explanation:string[];history:string[];taskType:string;status:string;proofId?:string|null;claimedByMe?:boolean}
 const skipReasons=[['listing_removed','Listing removed or expired'],['not_a_fit','Not a fit'],['competitor','Competitor advertisement'],['duplicate','Duplicate'],['already_contacted','Already contacted'],['outside_service_area','Outside service area'],['other','Other']] as const;
 
 export function TaskCard({task,restricted=false}:{task:QueueTask;restricted?:boolean}){
   const [message,setMessage]=useState(task.message),[copied,setCopied]=useState(false),[linkCopied,setLinkCopied]=useState(false),sent=task.status==="SENT";
   async function copy(value:string,setter:(value:boolean)=>void){await navigator.clipboard.writeText(value);setter(true);setTimeout(()=>setter(false),1500)}
-  if(restricted&&!task.claimedByMe)return <article className="task"><div className="placeholder">★</div><div className="taskBody"><div className="taskTitle"><div><h2>{task.title}</h2><p>{task.seller} · {task.city} · {task.sourceName}</p></div><b className="bigScore">{task.score}</b></div><p className="explain">Claim this opportunity to reveal its message and listing link. The claim lasts 30 minutes.</p><form action={claimTask}><input type="hidden" name="taskId" value={task.id}/><button className="primary">Claim task</button></form></div></article>;
+  const arrivedLabel=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Toronto",dateStyle:"medium",timeStyle:"short"}).format(new Date(task.arrivedAt));
+  if(restricted&&!task.claimedByMe)return <article className="task"><div className="placeholder">★</div><div className="taskBody"><div className="taskTitle"><div><h2>{task.title}</h2><p>{task.seller} · {task.city} · {task.sourceName} · Added {arrivedLabel}</p></div><b className="bigScore">{task.score}</b></div><p className="explain">Claim this opportunity to reveal its message and listing link. The claim lasts 30 minutes.</p><form action={claimTask}><input type="hidden" name="taskId" value={task.id}/><button className="primary">Claim task</button></form></div></article>;
   return <article className="task"><div className="placeholder">★</div><div className="taskBody">
-    <div className="taskTitle"><div><h2>{task.title}</h2><p>{task.seller} · {task.city} · {task.sourceName} · {task.taskType.replaceAll("_"," ")} · {task.status}</p></div><b className="bigScore">{task.score}</b></div>
+    <div className="taskTitle"><div><h2>{task.title}</h2><p>{task.seller} · {task.city} · {task.sourceName} · {task.taskType.replaceAll("_"," ")} · {task.status}</p><p><b>Added to dashboard:</b> {arrivedLabel}</p></div><b className="bigScore">{task.score}</b></div>
     <p className="explain">{task.explanation.join(" · ")||"No score explanation recorded"}</p>
-    {task.publicPhone&&<p><b>Published contact:</b> {task.publicPhone} · verify consent/contact basis and do-not-call status before calling or texting.</p>}
+    {task.publicPhone&&<p><b>Published contact:</b> <a href={`tel:${task.publicPhone}`}>{task.publicPhone}</a> · verify consent/contact basis and do-not-call status before calling or texting.</p>}
     {task.history.length>0&&<p><b>History:</b> {task.history.join(" · ")}</p>}
     {task.proofId&&!restricted&&<p><a href={`/api/outreach-proofs/${task.proofId}`} target="_blank" rel="noreferrer">View send proof ↗</a></p>}
     <textarea value={message} onChange={event=>setMessage(event.target.value)} maxLength={400} readOnly={sent}/>
