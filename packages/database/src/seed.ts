@@ -18,7 +18,7 @@ const families=[
   {key:"rental_property",name:"Rental property",terms:["apartment for rent","house for rent","room for rent","condo for rent","townhouse for rent","lease takeover"],searchTerms:["apartment for rent","house for rent","room for rent","lease takeover"],priority:65,frequencyMinutes:1440},
   {key:"commercial_change",name:"Commercial change",terms:["office closing","business closing","office furniture","commercial space for lease","office for lease","warehouse for rent","retail space for lease"],searchTerms:["office closing","commercial space for lease","warehouse for rent"],priority:70,frequencyMinutes:1440},
   {key:"storage_clearout",name:"Storage clear-out",terms:["storage locker"],priority:60,frequencyMinutes:1440},
-  {key:"equipment",name:"Heavy and specialty items",terms:["piano","hot tub","safe","pool table","commercial machinery","woodworking equipment","restaurant equipment","vending machine","riding mower","farm equipment"],priority:65,frequencyMinutes:360},
+  {key:"equipment",name:"Heavy and specialty items",terms:["piano","hot tub","safe","pool table","industrial equipment","commercial machinery","shop equipment","woodworking equipment","restaurant equipment","warehouse equipment","vending machine","commercial refrigerator","commercial freezer","commercial oven","display case","tool chest","workbench","riding mower","farm equipment"],searchTerms:["piano","hot tub","pool table","industrial equipment","shop equipment","restaurant equipment","warehouse equipment"],priority:65,frequencyMinutes:720},
 ];
 
 async function main(){
