@@ -5,7 +5,7 @@ import {headers} from "next/headers";
 export const dynamic="force-dynamic";
 
 type QueueSearch={territory?:string;minScore?:string;type?:string;source?:string;page?:string};
-const opportunityTypes=["residential_move","furniture_delivery","appliance_delivery","rental_move","office_move","packing","junk_removal","labour_only","equipment_purchase"] as const;
+const opportunityTypes=["residential_move","furniture_delivery","appliance_delivery","rental_move","office_move","packing","junk_removal","labour_only","equipment_purchase","retail_delivery_partner"] as const;
 const sourceTypes=["facebook_marketplace","kijiji"] as const;
 const PAGE_SIZE=25;
 function torontoDayStart(now:Date){const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Toronto",year:"numeric",month:"numeric",day:"numeric",hour:"numeric",minute:"numeric",second:"numeric",hourCycle:"h23"}).formatToParts(now),value=(type:string)=>Number(parts.find(part=>part.type===type)?.value),localAsUtc=Date.UTC(value("year"),value("month")-1,value("day"),value("hour"),value("minute"),value("second")),offset=localAsUtc-now.getTime();return new Date(Date.UTC(value("year"),value("month")-1,value("day"))-offset)}

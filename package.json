@@ -25,6 +25,7 @@
     "sellers:backfill": "node --env-file=.env --import tsx scripts/backfill-seller-profiles.ts",
     "competitors:reclassify": "tsx scripts/reclassify-competitors.ts",
     "opportunities:remove-car-sized": "tsx scripts/remove-car-sized-opportunities.ts",
+    "retailers:reclassify": "tsx scripts/reclassify-retail-partners.ts",
     "email:send-now": "tsx scripts/send-opportunity-alerts.ts",
     "setup:facebook": "./scripts/setup-facebook-mcp.sh",
     "worker": "tsx apps/worker/src/index.ts",

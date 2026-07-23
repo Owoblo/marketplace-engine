@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const opportunityTypes=["residential_move","furniture_delivery","appliance_delivery","rental_move","office_move","packing","junk_removal","labour_only","equipment_purchase","competitor","irrelevant"] as const;
+export const opportunityTypes=["residential_move","furniture_delivery","appliance_delivery","rental_move","office_move","packing","junk_removal","labour_only","equipment_purchase","retail_delivery_partner","competitor","irrelevant"] as const;
 export const intentCategories=["explicit_moving","likely_moving","item_delivery","property_turnover","commercial_change","weak_signal","none"] as const;
 export const recommendedActions=["contact_now","contact_later","monitor","skip"] as const;
 

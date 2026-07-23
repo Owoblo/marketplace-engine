@@ -4,6 +4,7 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-07-22",
   "compatibility_flags": ["nodejs_compat"],
+  "routes": [{"pattern": "marketplace.starmovers.ca", "custom_domain": true}],
   "assets": {
     "binding": "ASSETS",
     "directory": ".open-next/assets"
@@ -12,7 +13,7 @@
     "enabled": true
   },
   "vars": {
-    "APP_BASE_URL": "https://saturn-star-marketplace-engine.johnowolabi80.workers.dev",
+    "APP_BASE_URL": "https://marketplace.starmovers.ca",
     "DASHBOARD_ROLE": "ADMIN"
   },
   "hyperdrive": [
