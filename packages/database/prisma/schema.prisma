@@ -135,16 +135,56 @@ model FacebookGroup {
   accessType            String              @default("UNKNOWN")
   outreachPolicy        String              @default("REVIEW_RULES")
   rulesSummary          String?
+  rulesText             String?
+  rulesAssessment       Json?
+  suggestedAdminMessage String?
+  adminOutreachStatus   String              @default("NOT_CONTACTED")
   enabled               Boolean             @default(true)
   assignedRepEmail      String?
   searchPriority        Int                 @default(50)
   lastReviewedAt        DateTime?
   lastSuccessfulScanAt  DateTime?
   posts                 FacebookGroupPost[]
+  admins                FacebookGroupAdmin[]
+  contentDrafts         FacebookGroupContentDraft[]
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
 
   @@index([regionId, enabled])
+}
+
+model FacebookGroupContentDraft {
+  id                    String        @id @default(cuid())
+  groupId               String
+  group                 FacebookGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  contentAngle          String
+  body                  String
+  status                String        @default("DRAFT")
+  scheduledFor          DateTime?
+  postedAt              DateTime?
+  facebookPostUrl       String?
+  createdBy             String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([groupId, status, scheduledFor])
+}
+
+model FacebookGroupAdmin {
+  id                    String        @id @default(cuid())
+  groupId               String
+  group                 FacebookGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  displayName           String
+  profileUrl            String?
+  role                  String        @default("ADMIN")
+  contactStatus         String        @default("NOT_CONTACTED")
+  contactedAt           DateTime?
+  responseNotes         String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@unique([groupId, displayName])
+  @@index([groupId, contactStatus])
 }
 
 model FacebookGroupPost {

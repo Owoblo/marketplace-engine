@@ -1,8 +1,8 @@
 "use server";
 import {createHash} from "node:crypto";
 import {revalidatePath} from "next/cache";
-import {prisma} from "@marketplace-engine/database";
-import {classifyFacebookGroupPost} from "@marketplace-engine/intelligence";
+import {Prisma,prisma} from "@marketplace-engine/database";
+import {assessFacebookGroupRules,classifyFacebookGroupPost,draftFacebookGroupAdminMessage,draftFacebookGroupValuePost} from "@marketplace-engine/intelligence";
 import {z} from "zod";
 import {requireRole} from "../../lib/auth";
 
@@ -13,6 +13,50 @@ export async function createFacebookGroup(formData:FormData){
   const input=z.object({regionId:z.string().min(1),name:z.string().trim().min(2).max(120),groupUrl,accessType:z.enum(["PUBLIC","PRIVATE","UNKNOWN"]),outreachPolicy:z.enum(["COMMENTS_ALLOWED","DIRECT_MESSAGE_ONLY","MONITOR_ONLY","REVIEW_RULES"]),rulesSummary:z.string().trim().max(1000).optional(),searchPriority:z.coerce.number().int().min(0).max(100)}).parse(Object.fromEntries(formData));
   await prisma.facebookGroup.upsert({where:{groupUrl:input.groupUrl},update:{regionId:input.regionId,name:input.name,accessType:input.accessType,outreachPolicy:input.outreachPolicy,rulesSummary:input.rulesSummary||null,searchPriority:input.searchPriority,lastReviewedAt:new Date()},create:{...input,rulesSummary:input.rulesSummary||null,lastReviewedAt:new Date()}});
   await prisma.auditEvent.create({data:{eventType:"facebook_group_registered",entityType:"FacebookGroup",payload:{name:input.name,groupUrl:input.groupUrl,outreachPolicy:input.outreachPolicy}}});
+  revalidatePath("/facebook-groups");
+}
+
+export async function updateFacebookGroupPlaybook(formData:FormData){
+  requireRole("MANAGER");
+  const input=z.object({groupId:z.string().min(1),rulesText:z.string().trim().max(12000).optional(),adminDisplayName:z.string().trim().max(120).optional(),adminProfileUrl:z.union([z.string().url(),z.literal("")]).optional(),adminRole:z.enum(["ADMIN","MODERATOR"]).default("ADMIN")}).parse(Object.fromEntries(formData));
+  const group=await prisma.facebookGroup.findUniqueOrThrow({where:{id:input.groupId},include:{region:true}});
+  const assessment=assessFacebookGroupRules(input.rulesText??"");
+  const suggestedAdminMessage=draftFacebookGroupAdminMessage({groupName:group.name,regionName:group.region.name,assessment,...(input.adminDisplayName?{adminDisplayName:input.adminDisplayName}:{})});
+  await prisma.$transaction(async tx=>{
+    await tx.facebookGroup.update({where:{id:group.id},data:{rulesText:input.rulesText||null,rulesSummary:assessment.reasons.join("; "),rulesAssessment:assessment as unknown as Prisma.InputJsonValue,outreachPolicy:assessment.recommendedPolicy,suggestedAdminMessage,lastReviewedAt:new Date()}});
+    if(input.adminDisplayName)await tx.facebookGroupAdmin.upsert({where:{groupId_displayName:{groupId:group.id,displayName:input.adminDisplayName}},update:{profileUrl:input.adminProfileUrl||null,role:input.adminRole},create:{groupId:group.id,displayName:input.adminDisplayName,profileUrl:input.adminProfileUrl||null,role:input.adminRole}});
+    await tx.auditEvent.create({data:{eventType:"facebook_group_playbook_updated",entityType:"FacebookGroup",entityId:group.id,payload:{rulesStatus:assessment.status,adminDisplayName:input.adminDisplayName??null}}});
+  });
+  revalidatePath("/facebook-groups");
+}
+
+export async function updateFacebookGroupAdminOutreach(formData:FormData){
+  requireRole("MANAGER");
+  const input=z.object({groupId:z.string(),adminId:z.string().optional(),status:z.enum(["NOT_CONTACTED","READY","CONTACTED","APPROVED","DECLINED"]),responseNotes:z.string().trim().max(1000).optional()}).parse(Object.fromEntries(formData));
+  await prisma.$transaction(async tx=>{
+    await tx.facebookGroup.update({where:{id:input.groupId},data:{adminOutreachStatus:input.status}});
+    if(input.adminId)await tx.facebookGroupAdmin.update({where:{id:input.adminId},data:{contactStatus:input.status,...(input.status==="CONTACTED"?{contactedAt:new Date()}:{}),responseNotes:input.responseNotes||null}});
+    await tx.auditEvent.create({data:{eventType:"facebook_group_admin_outreach_updated",entityType:"FacebookGroup",entityId:input.groupId,payload:{status:input.status}}});
+  });
+  revalidatePath("/facebook-groups");
+}
+
+export async function generateFacebookGroupContentDraft(formData:FormData){
+  requireRole("MARKETPLACE_REP");
+  const input=z.object({groupId:z.string(),angle:z.enum(["moving_tip","delivery_tip","availability","community_question"]),scheduledFor:z.string().optional()}).parse(Object.fromEntries(formData));
+  const group=await prisma.facebookGroup.findUniqueOrThrow({where:{id:input.groupId},include:{region:true}});
+  if(group.outreachPolicy==="MONITOR_ONLY")throw new Error("Group rules currently make this group monitor-only");
+  const body=draftFacebookGroupValuePost({regionName:group.region.name,angle:input.angle});
+  const scheduled=input.scheduledFor?new Date(input.scheduledFor):null;
+  await prisma.facebookGroupContentDraft.create({data:{groupId:group.id,contentAngle:input.angle,body,scheduledFor:scheduled&&!Number.isNaN(scheduled.getTime())?scheduled:null,createdBy:process.env.DASHBOARD_USERNAME??null}});
+  revalidatePath("/facebook-groups");
+}
+
+export async function updateFacebookGroupContentDraft(formData:FormData){
+  requireRole("MARKETPLACE_REP");
+  const input=z.object({id:z.string(),status:z.enum(["DRAFT","APPROVED","POSTED","SKIPPED"]),body:z.string().trim().min(20).max(4000),facebookPostUrl:z.union([z.string().url(),z.literal("")]).optional()}).parse(Object.fromEntries(formData));
+  await prisma.facebookGroupContentDraft.update({where:{id:input.id},data:{body:input.body,status:input.status,facebookPostUrl:input.facebookPostUrl||null,postedAt:input.status==="POSTED"?new Date():null}});
+  await prisma.auditEvent.create({data:{eventType:"facebook_group_content_updated",entityType:"FacebookGroupContentDraft",entityId:input.id,payload:{status:input.status}}});
   revalidatePath("/facebook-groups");
 }
 
