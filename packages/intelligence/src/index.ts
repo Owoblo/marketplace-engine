@@ -13,6 +13,23 @@ export function isRetailInventoryListing(listing:Pick<NormalizedListing,"title"|
 }
 export function isClearlyCarSizedItem(listing:Pick<NormalizedListing,"title"|"description">){const text=`${listing.title} ${listing.description??""}`.toLowerCase();const independentMove=/moving sale|moving out|relocating|relocated|relocation|leaving (?:the )?province|moving to (?:another|a new) (?:city|province)|everything must go|house contents|apartment contents/.test(text);const fullSize=/washer|clothes dryer|refrigerator|full.?size fridge|chest freezer|upright freezer|stove|range|dishwasher|commercial appliance/.test(text);const carSized=/air purifier|humidifier|dehumidifier|portable (?:air conditioner|a\/?c)|window (?:air conditioner|a\/?c)|mini.?fridge|microwave|toaster|air fryer|coffee maker|blender|stand mixer|vacuum cleaner|space heater|water cooler|countertop appliance|small appliance|toothbrush/.test(text);return carSized&&!fullSize&&!independentMove}
 export function isUnrelatedTradeService(listing:Pick<NormalizedListing,"title"|"description">){const text=`${listing.title} ${listing.description??""}`.toLowerCase();return /\b(snow (?:remov(?:al|ed|e)|relocat(?:e|ing|ion)|plow(?:ing)?|hauling)|relocat(?:e|ing|ion) snow|move (?:the )?snow|dump trucks?.{0,30}(?:snow|soil|gravel|dirt|asphalt)|(?:soil|gravel|dirt|asphalt) (?:delivery|hauling|removal)|landscaping|excavation service|concrete pumping|septic service)\b/.test(text)}
+function normalizeAdvertisementSignals(value:string):string {
+  return value
+    .normalize("NFKD")
+    .replace(/\p{M}+/gu,"")
+    .toLowerCase()
+    .replace(/\\+\/+|\/+\\+/g,"v")
+    .replace(/[0]/g,"o")
+    .replace(/[1!|]/g,"i")
+    .replace(/[5$]/g,"s")
+    .replace(/[3]/g,"e")
+    .replace(/[@]/g,"a")
+    .replace(/[7]/g,"t")
+    .replace(/i{2,}/g," ")
+    .replace(/[^\p{L}\p{N}]+/gu," ")
+    .replace(/\s+/g," ")
+    .trim();
+}
 export interface ScoreContext { listing:NormalizedListing; classification:Classification; largeItemCount?:number; sellerListingCount?:number; inActiveTerritory:boolean; previousContactCount?:number; suspicious?:boolean; suppressed?:boolean; now?:Date }
 export interface ScoreResult { score:number; explanation:string[] }
 export function scoreOpportunity(context:ScoreContext,weights:Record<keyof typeof DEFAULT_SCORING_WEIGHTS,number>={...DEFAULT_SCORING_WEIGHTS}):ScoreResult {
@@ -38,7 +55,7 @@ export function classifyDeterministically(listing:NormalizedListing):Classificat
 }
 
 export function isCompetitorAdvertisement(listing:Pick<NormalizedListing,"title"|"description"> & Partial<Pick<NormalizedListing,"sellerDisplayName">>){
-  const title=listing.title.toLowerCase(),description=(listing.description??"").toLowerCase(),seller=(listing.sellerDisplayName??"").toLowerCase(),text=`${title} ${description}`;
+  const title=normalizeAdvertisementSignals(listing.title),description=normalizeAdvertisementSignals(listing.description??""),seller=normalizeAdvertisementSignals(listing.sellerDisplayName??""),text=`${title} ${description}`;
   if(/\bancient\b/.test(seller))return true;
   const tangibleProduct=/\b(refrigerator|fridge|freezer|washer|dryer|stove|range|dishwasher|appliance|sectional|couch|sofa|dining (?:table|set)|bed(?:room)? set|mattress|dresser|wardrobe|desk|chair|table|piano|hot tub|safe|workbench|tool chest|table saw|band saw|planer|jointer|lathe|drill press|mixer|display case|vending machine|arcade machine|generator|mower|tractor|machine|equipment)\b/.test(title);
   const productSale=/\b(for sale|condition|working|tested|warranty|pick ?up|pickup|price|in stock|available|dimensions?|wide|tall|deep|brand new|used)\b/.test(text);

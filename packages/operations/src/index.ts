@@ -11,7 +11,13 @@ export function deduplicateListings<T extends {sourceType:string;externalListing
 export function assignTerritoryByCity(regionKey:string|undefined,territories:readonly {id:string;regionKey:string;enabled:boolean}[]){return territories.find((t)=>t.enabled&&t.regionKey===regionKey)??null}
 
 const normalizeLocation=(value:string)=>` ${value.toLowerCase().normalize("NFKD").replace(/[’']/g,"").replace(/[^a-z0-9]+/g," ").trim()} `;
-export function isLocationExcluded(locationText:string|undefined,excludedTerms:readonly string[]){if(!locationText)return false;const location=normalizeLocation(locationText);return excludedTerms.some(term=>{const normalized=normalizeLocation(term).trim();return normalized.length>0&&location.includes(` ${normalized} `)})}
+export function isLocationExcluded(locationText:string|undefined,excludedTerms:readonly string[]){
+  if(!locationText)return false;
+  const location=normalizeLocation(locationText);
+  const outsideOntario=/(?:,\s*|\s)(?:mi|michigan)(?:\s+\d{5}(?:-\d{4})?)?(?:\s|$)/i.test(locationText)
+    || /\b(?:united states|usa)\b/i.test(locationText);
+  return outsideOntario||excludedTerms.some(term=>{const normalized=normalizeLocation(term).trim();return normalized.length>0&&location.includes(` ${normalized} `)});
+}
 
 const queryTokens=(query:string)=>new Set(query.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/).filter(Boolean));
 export function queryOverlapScore(a:string,b:string){const left=queryTokens(a),right=queryTokens(b);if(!left.size||!right.size)return 0;const intersection=[...left].filter(token=>right.has(token)).length;return intersection/new Set([...left,...right]).size}
