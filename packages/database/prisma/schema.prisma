@@ -120,8 +120,67 @@ model Region {
   cities              City[]
   launchConfiguration RegionLaunchConfiguration?
   territories         Territory[]
+  facebookGroups      FacebookGroup[]
   createdAt           DateTime                   @default(now())
   updatedAt           DateTime                   @updatedAt
+}
+
+model FacebookGroup {
+  id                    String              @id @default(cuid())
+  regionId              String
+  region                Region              @relation(fields: [regionId], references: [id])
+  name                  String
+  groupUrl              String              @unique
+  externalGroupId       String?
+  accessType            String              @default("UNKNOWN")
+  outreachPolicy        String              @default("REVIEW_RULES")
+  rulesSummary          String?
+  enabled               Boolean             @default(true)
+  assignedRepEmail      String?
+  searchPriority        Int                 @default(50)
+  lastReviewedAt        DateTime?
+  lastSuccessfulScanAt  DateTime?
+  posts                 FacebookGroupPost[]
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  @@index([regionId, enabled])
+}
+
+model FacebookGroupPost {
+  id                    String        @id @default(cuid())
+  groupId               String
+  group                 FacebookGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  externalPostId        String?
+  postUrl               String        @unique
+  authorExternalId      String?
+  authorDisplayName     String?
+  originalText          String
+  imageUrls             Json          @default("[]")
+  locationText          String?
+  postedAt              DateTime?
+  firstCapturedAt       DateTime       @default(now())
+  lastObservedAt        DateTime       @default(now())
+  contentHash           String
+  opportunityType       String
+  intentCategory        String
+  confidence            Float
+  opportunityScore      Int
+  reasoningSummary      String
+  positiveSignals       Json          @default("[]")
+  negativeSignals       Json          @default("[]")
+  recommendedAction     String
+  suggestedComment      String?
+  suggestedDirectMessage String?
+  reviewStatus          String        @default("UNREVIEWED")
+  reviewedAt            DateTime?
+  reviewNotes           String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([contentHash])
+  @@index([reviewStatus, opportunityScore])
+  @@index([authorExternalId])
 }
 
 model RegionGridDefinition {
