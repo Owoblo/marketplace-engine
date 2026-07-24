@@ -6,6 +6,7 @@ const actorListing={url:"https://www.kijiji.ca/v-moving-storage/windsor-area-on/
 describe("Kijiji normalization",()=>{
   it("uses the stable ad id and preserves detailed seller data",()=>{const listing=normalizeKijijiListing(actorListing);expect(listing).toMatchObject({sourceType:"kijiji",externalListingId:"1712345678",sellerExternalId:"seller-42",sellerDisplayName:"Sarah",price:450,publicContactPhone:"519-555-0188",latitude:42.31,longitude:-83.03});expect(listing.imageUrls).toHaveLength(1)});
   it("extracts an unmasked description phone but not a masked seller number",()=>{expect(extractPublicPhone({...actorListing,seller:{phoneNumber:"xxx-xxx-0188"}})).toBe("519-555-0188")});
+  it("extracts a public phone returned in a nested reveal/contact payload",()=>{expect(extractPublicPhone({...actorListing,description:"Call for details",seller:{...actorListing.seller,phoneNumber:"xxx-xxx-0188"},contact:{revealedPhone:"+1 (226) 555-0199"}})).toBe("226-555-0199")});
   it("rejects URLs without a stable ad id",()=>expect(()=>extractKijijiListingId("https://www.kijiji.ca/b-canada/couch/k0l0")).toThrow());
   it("builds a newest-first regional search URL",()=>{const url=new URL(buildKijijiSearchUrl({query:"moving sale",point:{latitude:42.175,longitude:-82.825,radiusKm:44,sourceCellKey:"windsor-region",partIndex:0}}));expect(url.searchParams.get("sort")).toBe("dateDesc");expect(url.searchParams.get("ll")).toBe("42.175,-82.825");expect(url.searchParams.get("radius")).toBe("44")});
 });

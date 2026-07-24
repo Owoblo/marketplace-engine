@@ -1,0 +1,10 @@
+--- a/src/tools/search.ts
++++ b/src/tools/search.ts
+@@ -55,7 +55,7 @@
+       const summary = result.listings
+         .map(
+           (l, i) =>
+-            `${i + 1}. **${l.title}** — ${l.price}\n   📍 ${l.location} | 👤 ${l.sellerName}${l.isPending ? " ⏳ PENDING" : ""}\n   🔗 ${l.url}`
++            `${i + 1}. **${l.title}** — ${l.price}\n   📍 ${l.location} | 👤 ${l.sellerName}${l.isPending ? " ⏳ PENDING" : ""}${l.imageUrl ? `\n   🖼️ ${l.imageUrl}` : ""}\n   🔗 ${l.url}`
+         )
+         .join("\n\n");

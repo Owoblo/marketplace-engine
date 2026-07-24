@@ -1,0 +1,3 @@
+.review-grid{display:grid;gap:18px}
+.review-images{display:flex;gap:10px;overflow:auto}
+.review-images img{width:180px;height:135px;object-fit:cover;border-radius:10px;background:#e7ebf0}

@@ -9,7 +9,24 @@ export type KijijiActorListing=z.infer<typeof kijijiActorListingSchema>;
 
 const parsePrice=(value:unknown)=>{if(typeof value==="number"&&value>=0)return value;if(typeof value!=="string")return undefined;const parsed=Number(value.replace(/[^0-9.-]/g,""));return Number.isFinite(parsed)&&parsed>=0?parsed:undefined};
 export function extractKijijiListingId(url:string){const match=new URL(url).pathname.match(/\/(\d+)(?:\/)?$/);if(!match)throw new Error(`Kijiji listing URL has no stable ad ID: ${url}`);return match[1]!}
-export function extractPublicPhone(raw:unknown){const parsed=kijijiActorListingSchema.safeParse(raw);if(!parsed.success)return undefined;const direct=parsed.data.seller?.phoneNumber;if(direct&&/\d{10}/.test(direct.replace(/\D/g,""))&&!/x/i.test(direct))return direct;const matches=parsed.data.description.match(/(?:\+?1[\s.-]?)?\(?([2-9]\d{2})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})/);return matches?`${matches[1]}-${matches[2]}-${matches[3]}`:undefined}
+const normalizePublicPhone=(value:unknown)=>{
+  if(typeof value!=="string"||/[x*•]{3,}/i.test(value))return undefined;
+  const match=value.match(/(?:\+?1[\s().-]?)?([2-9]\d{2})[\s().-]*(\d{3})[\s.-]*(\d{4})/);
+  return match?`${match[1]}-${match[2]}-${match[3]}`:undefined;
+};
+function phoneCandidates(value:unknown,key="",depth=0):string[]{
+  if(depth>5||value==null)return [];
+  if(typeof value==="string")return /phone|telephone|mobile|contact|call|sms|text|number/i.test(key)?[value]:[];
+  if(Array.isArray(value))return value.flatMap(item=>phoneCandidates(item,key,depth+1));
+  if(typeof value!=="object")return [];
+  return Object.entries(value as Record<string,unknown>).flatMap(([childKey,child])=>phoneCandidates(child,childKey,depth+1));
+}
+export function extractPublicPhone(raw:unknown){
+  const parsed=kijijiActorListingSchema.safeParse(raw);if(!parsed.success)return undefined;
+  const candidates=[parsed.data.seller?.phoneNumber,parsed.data.description,...phoneCandidates(raw)];
+  for(const candidate of candidates){const phone=normalizePublicPhone(candidate);if(phone)return phone}
+  return undefined;
+}
 export function normalizeKijijiListing(input:unknown):NormalizedListing {const raw=kijijiActorListingSchema.parse(input),id=extractKijijiListingId(raw.url),location=raw.address,imageUrls=raw.images.map(image=>typeof image==="string"?image:image.url),publishedAt=raw.dateFrom?new Date(raw.dateFrom):undefined,publicContactPhone=extractPublicPhone(raw);return normalizedListingSchema.parse({sourceType:"kijiji",externalListingId:id,listingUrl:raw.url,sellerExternalId:raw.seller?.id==null?undefined:String(raw.seller.id),sellerDisplayName:raw.seller?.name,title:raw.title,description:raw.description||undefined,price:parsePrice(raw.price),currency:raw.currency??"CAD",condition:raw.condition??undefined,locationText:location?.street_address??location?.name??location?.locality??undefined,latitude:location?.latitude,longitude:location?.longitude,imageUrls,publicContactPhone,publishedAt:publishedAt&&!Number.isNaN(publishedAt.getTime())?publishedAt:undefined,status:"active",rawSourcePayload:{...raw,publicContactPhone,detailFetched:true,detailFetchedAt:new Date().toISOString()}})}
 
 const slug=(value:string)=>value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
