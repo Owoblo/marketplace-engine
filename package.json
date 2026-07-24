@@ -21,6 +21,7 @@
     "db:deploy": "prisma migrate deploy --schema packages/database/prisma/schema.prisma",
     "db:seed": "tsx packages/database/src/seed.ts",
     "queue:cleanup": "tsx scripts/cleanup-outreach-queue.ts",
+    "queue:repair-facebook-details": "tsx scripts/repair-facebook-detail-queue.ts",
     "messages:refresh": "tsx scripts/refresh-ready-messages.ts",
     "sellers:backfill": "node --env-file=.env --import tsx scripts/backfill-seller-profiles.ts",
     "competitors:reclassify": "tsx scripts/reclassify-competitors.ts",
